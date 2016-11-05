@@ -1,6 +1,7 @@
 function(cfg)
   local tf = import "phase1/tf.jsonnet";
   local p1 = cfg.phase1;
+  local p2 = cfg.phase2;
   local gce = p1.gce;
   local names = {
     instance_template: "%(cluster_name)s-node-instance-template" % p1,
@@ -36,7 +37,7 @@ function(cfg)
         user, cluster, context,
         p1.cluster_name + "-root",
         "https://${google_compute_address.%(master_ip)s.address}" % names
-    ));
+      ));
   {
     output: {
       [names.master_ip]: {
@@ -72,7 +73,7 @@ function(cfg)
           network: gce.network,
           allow: [{
             protocol: "tcp",
-            ports: ["443"],
+            ports: ["443", "9898"],
           }],
           source_ranges: ["0.0.0.0/0"],
           target_tags: ["%(cluster_name)s-master" % p1],
@@ -117,6 +118,7 @@ function(cfg)
             "k8s-apisever-public-key": "${tls_locally_signed_cert.%s-master.cert_pem}" % p1.cluster_name,
             "k8s-apisever-private-key": "${tls_private_key.%s-master.private_key_pem}" % p1.cluster_name,
             "k8s-master-kubeconfig": kubeconfig(p1.cluster_name + "-master", "local", "service-account-context"),
+            "k8s-phase2-provider": "%(provider)s" % p2,
           },
           disk: [{
             image: gce.os_image,
@@ -136,6 +138,8 @@ function(cfg)
             "k8s-deploy-bucket": names.release_bucket,
             "k8s-config": config_metadata_template % [names.master_ip, "node"],
             "k8s-node-kubeconfig": kubeconfig(p1.cluster_name + "-node", "local", "service-account-context"),
+            "k8s-phase2-provider": "%(provider)s" % p2,
+            "k8s-master-ip": "${google_compute_address.%(master_ip)s.address}" % names,
           },
           disk: [{
             source_image: gce.os_image,
@@ -157,7 +161,6 @@ function(cfg)
           target_size: p1.num_nodes,
         },
       },
-
       // Public Key Infrastructure
       null_resource: {
         kubeconfig: {
