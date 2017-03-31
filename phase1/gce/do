@@ -50,7 +50,9 @@ fetch_kubeconfig() {
     # succeeds, then stdout is tainted by ssh initialization output, so we echo
     # a marker to indicate the start of the file, and delete all lines up to and
     # including it.
-    if gcloud compute ssh --project "$PROJECT" --zone "$ZONE" "$MASTER" --command "echo STARTFILE; sudo cat /etc/kubernetes/admin.conf" > .tmp/kubeconfig.raw; then
+
+    # Quick fix for https://github.com/kubernetes/kubeadm/issues/219
+    if gcloud compute ssh --project "$PROJECT" --zone "$ZONE" "ubuntu@$MASTER" --command "echo STARTFILE; sudo cat /etc/kubernetes/admin.conf" > .tmp/kubeconfig.raw; then
       sed '0,/^STARTFILE$/d' .tmp/kubeconfig.raw > .tmp/kubeconfig.json
       echo Successfully fetched kubeconfig.
       return
