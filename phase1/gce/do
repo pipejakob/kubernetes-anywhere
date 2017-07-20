@@ -52,7 +52,7 @@ fetch_kubeconfig() {
     # including it.
 
     # Quick fix for https://github.com/kubernetes/kubeadm/issues/219
-    if gcloud compute ssh --project "$PROJECT" --zone "$ZONE" "ubuntu@$MASTER" --command "echo STARTFILE; sudo cat /etc/kubernetes/admin.conf" > .tmp/kubeconfig.raw; then
+    if gcloud compute ssh --project "$PROJECT" --zone "$ZONE" "$USER@$MASTER" --command "echo STARTFILE; sudo cat /etc/kubernetes/admin.conf" > .tmp/kubeconfig.raw; then
       sed '0,/^STARTFILE$/d' .tmp/kubeconfig.raw > .tmp/kubeconfig.json
       echo Successfully fetched kubeconfig.
       return
